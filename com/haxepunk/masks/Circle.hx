@@ -6,13 +6,13 @@ import com.haxepunk.masks.Grid;
 import com.haxepunk.masks.SlopedGrid;
 import com.haxepunk.math.Projection;
 import com.haxepunk.math.Vector;
+import flash.display.BitmapData;
 import flash.display.Graphics;
 import flash.geom.Point;
 
 /**
  * Uses circular area to determine collision.
  */
-
 class Circle extends Hitbox
 {
 	/**
@@ -27,11 +27,13 @@ class Circle extends Hitbox
 		this.radius = radius;
 		_x = x + radius;
 		_y = y + radius;
+		_fakePixelmask = new Pixelmask(new BitmapData(1, 1));
 
 		_check.set(Type.getClassName(Mask), collideMask);
-		_check.set(Type.getClassName(Circle), collideCircle);
 		_check.set(Type.getClassName(Hitbox), collideHitbox);
 		_check.set(Type.getClassName(Grid), collideGrid);
+		_check.set(Type.getClassName(Pixelmask), collidePixelmask);
+		_check.set(Type.getClassName(Circle), collideCircle);
 		_check.set(Type.getClassName(SlopedGrid), collideSlopedGrid);
 	}
 
@@ -118,6 +120,46 @@ class Circle extends Hitbox
 		}
 
 		return false;
+	}
+
+	/**
+	 * Checks for collision with a Pixelmask.
+	 * May be slow (especially with big polygons), added for completeness sake.
+	 * 
+	 * Internally sets up a Pixelmask and uses that for collision check.
+	 */
+	@:access(com.haxepunk.masks.Pixelmask)
+	private function collidePixelmask(pixelmask:Pixelmask):Bool
+	{
+		var data:BitmapData = _fakePixelmask._data;
+		
+		_fakePixelmask._x = _x - _radius;
+		_fakePixelmask._y = _y - _radius;
+		_fakePixelmask.parent = parent;
+		
+		_width = _height = _radius * 2;
+		
+		if (data == null || (data.width < _width || data.height < _height)) {
+			data = new BitmapData(_width, height, true, 0);
+		} else {
+			data.fillRect(data.rect, 0);
+		}
+		
+		var graphics:Graphics = HXP.sprite.graphics;
+		graphics.clear();
+
+		graphics.beginFill(0xFFFFFF, 1);
+		graphics.lineStyle(1, 0xFFFFFF, 1);
+		
+		graphics.drawCircle(_x + parent.originX, _y + parent.originY, _radius);
+		
+		graphics.endFill();
+
+		data.draw(HXP.sprite);
+		
+		_fakePixelmask.data = data;
+
+		return pixelmask.collide(_fakePixelmask);
 	}
 
 	private function collideSlopedGrid(other:SlopedGrid):Bool
@@ -262,4 +304,5 @@ class Circle extends Hitbox
 	// Hitbox information.
 	private var _radius:Int;
 	private var _squaredRadius:Int; //Set automatically through the setter for radius
+	private var _fakePixelmask:Pixelmask;	// used for Pixelmask collision
 }

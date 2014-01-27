@@ -49,6 +49,7 @@ class Grid extends Hitbox
 		// set grid properties
 		columns = Std.int(width / tileWidth);
 		rows = Std.int(height / tileHeight);
+		data = new BitmapData(columns, rows, true, 0);
 
 		_tile = new Rectangle(0, 0, tileWidth, tileHeight);
 		_x = x;
@@ -62,18 +63,6 @@ class Grid extends Hitbox
 		_check.set(Type.getClassName(Hitbox), collideHitbox);
 		_check.set(Type.getClassName(Pixelmask), collidePixelmask);
 		_check.set(Type.getClassName(Grid), collideGrid);
-
-		data = new Array<Array<Bool>>();
-		for (x in 0...rows)
-		{
-			data.push(new Array<Bool>());
-#if neko // initialize to false instead of null
-			for (y in 0...columns)
-			{
-				data[x][y] = false;
-			}
-#end
-		}
 	}
 
 	/**
@@ -89,20 +78,7 @@ class Grid extends Hitbox
 			column = Std.int(column / _tile.width);
 			row = Std.int(row / _tile.height);
 		}
-		setTileXY(column, row, solid);
-	}
-
-	/**
-	 * Sets the value of the tile. Ignores the setting of usePositions, and assumes coordinates are
-	 * XY tile coordinates (the usePositions default).
-	 * @param	x			Tile column.
-	 * @param	y			Tile row.
-	 * @param	solid		If the tile should be solid.
-	 */
-	private function setTileXY(x:Int = 0, y:Int = 0, solid:Bool = true)
-	{
-		if (!checkTile(x, y)) return;
-		data[y][x] = solid;
+		data.setPixel32(column, row, solid ? 0xFFFFFFFF : 0);
 	}
 
 	/**
@@ -113,22 +89,6 @@ class Grid extends Hitbox
 	public inline function clearTile(column:Int = 0, row:Int = 0)
 	{
 		setTile(column, row, false);
-	}
-
-	private inline function checkTile(column:Int, row:Int):Bool
-	{
-		// check that tile is valid
-		if (column < 0 || column > columns - 1 || row < 0 || row > rows - 1)
-		{
-			#if debug
-				trace('Grid: Tile out of bounds: ' + column + ', ' + row);
-			#end
-			return false;
-		}
-		else
-		{
-			return true;
-		}
 	}
 
 	/**
@@ -144,20 +104,7 @@ class Grid extends Hitbox
 			column = Std.int(column / _tile.width);
 			row = Std.int(row / _tile.height);
 		}
-		return getTileXY(column, row);
-	}
-
-	/**
-	 * Gets the value of a tile. Ignores the setting of usePositions, and assumes coordinates are
-	 * XY tile coordinates (the usePositions default).
-	 * @param	column		Tile column.
-	 * @param	row			Tile row.
-	 * @return	tile value.
-	*/
-	private function getTileXY(x:Int = 0, y:Int = 0):Bool
-	{
-		if (!checkTile(x, y)) return false;
-		return data[y][x];
+		return data.getPixel32(column, row) != 0;
 	}
 
 	/**
@@ -178,13 +125,11 @@ class Grid extends Hitbox
 			height = Std.int(height / _tile.height);
 		}
 
-		for (yy in row...(row + height))
-		{
-			for (xx in column...(column + width))
-			{
-				setTileXY(xx, yy, solid);
-			}
-		}
+		_rect.x = column;
+		_rect.y = row;
+		_rect.width = width;
+		_rect.height = height;
+		data.fillRect(_rect, solid ? 0xFFFFFFFF : 0);
 	}
 
 	/**
@@ -209,7 +154,7 @@ class Grid extends Hitbox
 	{
 		var row:Array<String> = str.split(rowSep),
 			rows:Int = row.length,
-			col:Array<String>, cols:Int, x:Int, y:Int;
+			col:Array<String>, cols:Int;
 		for (y in 0...rows)
 		{
 			if (row[y] == '') continue;
@@ -254,7 +199,7 @@ class Grid extends Hitbox
 		{
 			for (x in 0...columns)
 			{
-				s += Std.string(getTileXY(x, y) ? solid : empty);
+				s += Std.string(getTile(x, y) ? solid : empty);
 				if (x != columns - 1) s += columnSep;
 			}
 			if (y != rows - 1) s += rowSep;
@@ -305,60 +250,47 @@ class Grid extends Hitbox
 	/**
 	 * The grid data.
 	 */
-	public var data(default, null):Array<Array<Bool>>;
+	public var data(default, null):BitmapData;
 
 	/** @private Collides against an Entity. */
 	override private function collideMask(other:Mask):Bool
 	{
-		var rectX:Int, rectY:Int, pointX:Int, pointY:Int;
 		_rect.x = other.parent.x - other.parent.originX - parent.x + parent.originX;
 		_rect.y = other.parent.y - other.parent.originY - parent.y + parent.originY;
-		pointX  = Std.int((_rect.x + other.parent.width - 1) / _tile.width) + 1;
-		pointY  = Std.int((_rect.y + other.parent.height -1) / _tile.height) + 1;
-		rectX   = Std.int(_rect.x / _tile.width);
-		rectY   = Std.int(_rect.y / _tile.height);
-
-		for (dy in rectY...pointY)
-		{
-			for (dx in rectX...pointX)
-			{
-				if (getTile(dx, dy))
-				{
-					return true;
-				}
-			}
-		}
-		return false;
+		_point.x = Std.int((_rect.x + other.parent.width - 1) / _tile.width) + 1;
+		_point.y = Std.int((_rect.y + other.parent.height -1) / _tile.height) + 1;
+		_rect.x = Std.int(_rect.x / _tile.width);
+		_rect.y = Std.int(_rect.y / _tile.height);
+		_rect.width = _point.x - _rect.x;
+		_rect.height = _point.y - _rect.y;
+	#if flash
+		return data.hitTest(HXP.zero, 1, _rect);
+	#else
+		return Mask.hitTest(data, HXP.zero, 1, _rect);
+	#end
 	}
 
 	/** @private Collides against a Hitbox. */
 	override private function collideHitbox(other:Hitbox):Bool
 	{
-		var rectX:Int, rectY:Int, pointX:Int, pointY:Int;
-		_rect.x = other.parent.x - other._x - parent.x + _x;
-		_rect.y = other.parent.y - other._y - parent.y + _y;
-		pointX = Std.int((_rect.x + other._width  - 1) / _tile.width) + 1;
-		pointY = Std.int((_rect.y + other._height - 1) / _tile.height) + 1;
-		rectX  = Std.int(_rect.x / _tile.width);
-		rectY  = Std.int(_rect.y / _tile.height);
-
-		for (dy in rectY...pointY)
-		{
-			for (dx in rectX...pointX)
-			{
-				if (getTile(dx, dy))
-				{
-					return true;
-				}
-			}
-		}
-		return false;
+		_rect.x = other.parent.x + other._x - parent.x - _x;
+		_rect.y = other.parent.y + other._y - parent.y - _y;
+		_point.x = Std.int((_rect.x + other._width - 1) / _tile.width) + 1;
+		_point.y = Std.int((_rect.y + other._height - 1) / _tile.height) + 1;
+		_rect.x = Std.int(_rect.x / _tile.width);
+		_rect.y = Std.int(_rect.y / _tile.height);
+		_rect.width = _point.x - _rect.x;
+		_rect.height = _point.y - _rect.y;
+	#if flash
+		return data.hitTest(HXP.zero, 1, _rect);
+	#else
+		return Mask.hitTest(data, HXP.zero, 1, _rect);
+	#end
 	}
 
 	/** @private Collides against a Pixelmask. */
 	private function collidePixelmask(other:Pixelmask):Bool
 	{
-#if flash
 		var x1:Int = Std.int(other.parent.x + other.x - parent.x - _x),
 			y1:Int = Std.int(other.parent.y + other.y - parent.y - _y),
 			x2:Int = Std.int((x1 + other.width - 1) / _tile.width),
@@ -370,37 +302,28 @@ class Grid extends Hitbox
 		_tile.x = x1 * _tile.width;
 		_tile.y = y1 * _tile.height;
 		var xx:Int = x1;
+		
 		while (y1 <= y2)
 		{
-			if (y1 < 0 || y1 >= data.length)
-			{
-				y1 ++;
-				continue;
-			}
-
 			while (x1 <= x2)
 			{
-				if (x1 < 0 || x1 >= data[0].length)
+				if (data.getPixel32(x1, y1) != 0)
 				{
-					x1 ++;
-					continue;
+				#if flash
+					if (other.data.hitTest(_point, other.threshold, _tile)) return true;
+				#else
+					if (Mask.hitTest(other.data, _point, other.threshold, _tile)) return true;
+				#end
 				}
-
-				if (data[y1][x1])
-				{
-					if (other.data.hitTest(_point, 1, _tile)) return true;
-				}
-				x1 ++;
+				x1++;
 				_tile.x += _tile.width;
 			}
 			x1 = xx;
-			y1 ++;
+			y1++;
 			_tile.x = x1 * _tile.width;
 			_tile.y += _tile.height;
 		}
-#else
-		trace('Pixelmasks will not work in targets other than flash due to hittest not being implemented in OpenFL.');
-#end
+		
 		return false;
 	}
 
@@ -479,10 +402,10 @@ class Grid extends Hitbox
 				var bc2:Int = Std.int(((x - other.parent.x - other._x) + (tw - 1)) / other._tile.width);
 				
 				// Check all the corners for collisions
-				if ((getTile(ac1, ar1) && other.getTile(bc1, br1))
-				 || (getTile(ac2, ar1) && other.getTile(bc2, br1))
-				 || (getTile(ac1, ar2) && other.getTile(bc1, br2))
-				 || (getTile(ac2, ar2) && other.getTile(bc2, br2)))
+				if ((data.getPixel32(ac1, ar1) != 0 && other.data.getPixel32(bc1, br1) != 0)
+				 || (data.getPixel32(ac2, ar1) != 0 && other.data.getPixel32(bc2, br1) != 0)
+				 || (data.getPixel32(ac1, ar2) != 0 && other.data.getPixel32(bc1, br2) != 0)
+				 || (data.getPixel32(ac2, ar2) != 0 && other.data.getPixel32(bc2, br2) != 0))
 				{
 					return true;
 				}
@@ -523,7 +446,7 @@ class Grid extends Hitbox
 			HXP.rect.x = HXP.point.x;
 			for (x in 0...columns)
 			{
-				if (data[y][x])
+				if (data.getPixel32(x, y) != 0)
 				{
 					graphics.drawRect(HXP.rect.x, HXP.rect.y, stepX, stepY);
 				}

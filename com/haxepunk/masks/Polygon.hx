@@ -8,6 +8,7 @@ import com.haxepunk.masks.Grid;
 import com.haxepunk.masks.Hitbox;
 import com.haxepunk.math.Projection;
 import com.haxepunk.math.Vector;
+import flash.display.BitmapData;
 import flash.display.Graphics;
 import flash.geom.Point;
 
@@ -17,32 +18,48 @@ import flash.geom.Point;
 class Polygon extends Hitbox
 {
 	/**
-	 * The polygon rotates around this point when the angle is set.
+	 * X coord to use for rotations.
+	 * Defaults to top-left corner.
 	 */
-	public var origin:Point;
+	public var originX:Float = 0;
+	
+	/**
+	 * Y coord to use for rotations.
+	 * Defaults to top-left corner.
+	 */
+	public var originY:Float = 0;
 
 
 	/**
 	 * Constructor.
-	 * @param	points		An array of coordinates that define the polygon (must have at least 3).
-	 * @param	origin	 	Pivot point for rotations.
+	 * @param	points		An array of coordinates that define the polygon (must have at least 3)
+	 * @param	x			X offset of the polygon.
+	 * @param	y			Y offset of the polygon.
+	 * @param	originX		X pivot for rotations.
+	 * @param	originY		Y pivot for rotations.
 	 */
-	public function new(points:Array<Point>, ?origin:Point)
+	public function new(points:Array<Point>, x:Int = 0, y:Int = 0, originX:Float = 0, originY:Float = 0)
 	{
 		super();
 		if (points.length < 3) throw "The polygon needs at least 3 sides.";
 		_points = points;
 
+		_indicesToRemove = new Array<Int>();
 		_fakeEntity = new Entity();
 		_fakeTileHitbox = new Hitbox();
+		_fakePixelmask = new Pixelmask(new BitmapData(1, 1));
 
 		_check.set(Type.getClassName(Mask), collideMask);
 		_check.set(Type.getClassName(Hitbox), collideHitbox);
 		_check.set(Type.getClassName(Grid), collideGrid);
+		_check.set(Type.getClassName(Pixelmask), collidePixelmask);
 		_check.set(Type.getClassName(Circle), collideCircle);
 		_check.set(Type.getClassName(Polygon), collidePolygon);
 
-		this.origin = origin != null ? origin : new Point();
+		_x = x;
+		_y = y;
+		this.originX = originX;
+		this.originY = originY;
 		_angle = 0;
 
 		updateAxes();
@@ -191,6 +208,58 @@ class Polygon extends Hitbox
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Checks for collision with a Pixelmask.
+	 * May be slow (especially with big polygons), added for completeness sake.
+	 * 
+	 * Internally sets up a Pixelmask using the polygon representation and uses that for collision check.
+	 */
+	@:access(com.haxepunk.masks.Pixelmask)
+	private function collidePixelmask(pixelmask:Pixelmask):Bool
+	{
+		var data:BitmapData = _fakePixelmask._data;
+		
+		_fakeEntity.width = _width;
+		_fakeEntity.height = _height;
+		_fakeEntity.x = parent.x - _x;
+		_fakeEntity.y = parent.y - _y;
+		_fakeEntity.originX = parent.originX;
+		_fakeEntity.originY = parent.originY;
+
+		_fakePixelmask._x = _x - parent.originX;
+		_fakePixelmask._y = _y - parent.originY;
+		_fakePixelmask.parent = _fakeEntity;
+		
+		if (data == null || (data.width < _width || data.height < _height)) {
+			data = new BitmapData(_width, height, true, 0);
+		} else {
+			data.fillRect(data.rect, 0);
+		}
+		
+		var graphics:Graphics = HXP.sprite.graphics;
+		graphics.clear();
+
+		graphics.beginFill(0xFFFFFF, 1);
+		graphics.lineStyle(1, 0xFFFFFF, 1);
+		
+		var offsetX:Float = _x + parent.originX;
+		var offsetY:Float = _y + parent.originY;
+		
+		graphics.moveTo(points[_points.length - 1].x + offsetX, _points[_points.length - 1].y + offsetY);
+		for (i in 0..._points.length)
+		{
+			graphics.lineTo(_points[i].x + offsetX, _points[i].y + offsetY);
+		}
+		
+		graphics.endFill();
+
+		data.draw(HXP.sprite);
+		
+		_fakePixelmask.data = data;
+		
+		return pixelmask.collide(_fakePixelmask);
 	}
 
 	/**
@@ -362,7 +431,7 @@ class Polygon extends Hitbox
 			graphics.endFill();
 
 			// draw pivot
-			graphics.drawCircle((offsetX + origin.x) * scaleX, (offsetY + origin.y) * scaleY, 2);
+			graphics.drawCircle((offsetX + originX) * scaleX, (offsetY + originY) * scaleY, 2);
 		}
 	}
 
@@ -450,8 +519,8 @@ class Polygon extends Hitbox
 
 		// return the polygon
 		var poly:Polygon = new Polygon(points);
-		poly.origin.x = radius;
-		poly.origin.y = radius;
+		poly.originX = radius;
+		poly.originY = radius;
 		poly.angle = angle;
 		return poly;
 	}
@@ -485,14 +554,14 @@ class Polygon extends Hitbox
 		for (i in 0..._points.length)
 		{
 			p = _points[i];
-			var dx:Float = p.x - origin.x;
-			var dy:Float = p.y - origin.y;
+			var dx:Float = p.x - originX;
+			var dy:Float = p.y - originY;
 
 			var pointAngle:Float = Math.atan2(dy, dx);
 			var length:Float = Math.sqrt(dx * dx + dy * dy);
 
-			p.x = Math.cos(pointAngle + angleDelta) * length + origin.x;
-			p.y = Math.sin(pointAngle + angleDelta) * length + origin.y;
+			p.x = Math.cos(pointAngle + angleDelta) * length + originX;
+			p.y = Math.sin(pointAngle + angleDelta) * length + originY;
 		}
 
 		for (a in _axes)
@@ -575,6 +644,7 @@ class Polygon extends Hitbox
 
 	private var _fakeEntity:Entity;				// used for Grid and Pixelmask collision
 	private var _fakeTileHitbox:Hitbox;			// used for Grid collision
+	private var _fakePixelmask:Pixelmask;		// used for Pixelmask collision
 
 	private var _indicesToRemove:Array<Int>;	// used in removeDuplicateAxes()
 
