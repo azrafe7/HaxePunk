@@ -8,6 +8,7 @@ import com.haxepunk.masks.Grid;
 import com.haxepunk.masks.Hitbox;
 import com.haxepunk.math.Projection;
 import com.haxepunk.math.Vector;
+import com.haxepunk.utils.BitmapDataPool;
 import flash.display.BitmapData;
 import flash.display.Graphics;
 import flash.geom.Point;
@@ -47,8 +48,8 @@ class Polygon extends Hitbox
 		_indicesToRemove = new Array<Int>();
 		_fakeEntity = new Entity();
 		_fakeTileHitbox = new Hitbox();
-		_fakePixelmask = new Pixelmask(new BitmapData(1, 1));
-
+		_fakePixelmask = new Pixelmask(new BitmapData(1, 1, true, 0));
+	
 		_check.set(Type.getClassName(Mask), collideMask);
 		_check.set(Type.getClassName(Hitbox), collideHitbox);
 		_check.set(Type.getClassName(Grid), collideGrid);
@@ -233,7 +234,7 @@ class Polygon extends Hitbox
 		_fakePixelmask.parent = _fakeEntity;
 		
 		if (data == null || (data.width < _width || data.height < _height)) {
-			data = new BitmapData(_width, height, true, 0);
+			data = new BitmapData(_width, _height, true, 0);
 		} else {
 			data.fillRect(data.rect, 0);
 		}

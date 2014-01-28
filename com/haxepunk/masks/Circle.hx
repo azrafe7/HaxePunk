@@ -1,11 +1,13 @@
 package com.haxepunk.masks;
 
 import com.haxepunk.Graphic;
+import com.haxepunk.HXP;
 import com.haxepunk.Mask;
 import com.haxepunk.masks.Grid;
 import com.haxepunk.masks.SlopedGrid;
 import com.haxepunk.math.Projection;
 import com.haxepunk.math.Vector;
+import com.haxepunk.utils.BitmapDataPool;
 import flash.display.BitmapData;
 import flash.display.Graphics;
 import flash.geom.Point;
@@ -27,8 +29,9 @@ class Circle extends Hitbox
 		this.radius = radius;
 		_x = x + radius;
 		_y = y + radius;
-		_fakePixelmask = new Pixelmask(new BitmapData(1, 1));
-
+		
+		_fakePixelmask = new Pixelmask(new BitmapData(1, 1, true, 0));
+	
 		_check.set(Type.getClassName(Mask), collideMask);
 		_check.set(Type.getClassName(Hitbox), collideHitbox);
 		_check.set(Type.getClassName(Grid), collideGrid);
@@ -140,7 +143,7 @@ class Circle extends Hitbox
 		_width = _height = _radius * 2;
 		
 		if (data == null || (data.width < _width || data.height < _height)) {
-			data = new BitmapData(_width, height, true, 0);
+			data = new BitmapData(_width, _height, true, 0);
 		} else {
 			data.fillRect(data.rect, 0);
 		}

@@ -1,5 +1,6 @@
 package com.haxepunk.masks;
 
+import com.haxepunk.utils.BitmapDataPool;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.Graphics;
@@ -49,8 +50,9 @@ class Grid extends Hitbox
 		// set grid properties
 		columns = Std.int(width / tileWidth);
 		rows = Std.int(height / tileHeight);
+		
 		data = new BitmapData(columns, rows, true, 0);
-
+	
 		_tile = new Rectangle(0, 0, tileWidth, tileHeight);
 		_x = x;
 		_y = y;

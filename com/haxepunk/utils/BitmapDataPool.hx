@@ -1,4 +1,4 @@
-package com.haxepunk.util;
+package com.haxepunk.utils;
 
 import flash.display.BitmapData;
 import flash.geom.Rectangle;

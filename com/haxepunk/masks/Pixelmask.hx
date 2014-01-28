@@ -1,6 +1,7 @@
 package com.haxepunk.masks;
 
 import com.haxepunk.Mask;
+import com.haxepunk.utils.BitmapDataPool;
 import flash.display.BitmapData;
 import flash.display.Graphics;
 import flash.geom.ColorTransform;
@@ -117,8 +118,8 @@ class Pixelmask extends Hitbox
 
 	override public function debugDraw(graphics:Graphics, scaleX:Float, scaleY:Float):Void
 	{
-		if (_debug == null) {
-			_debug = new BitmapData(_data.width, _data.height, true, 0x0);
+		if (_debug == null || _debug.width < _data.width || _debug.height < _data.height) {
+			_debug = new BitmapData(data.width, data.height, true, 0);
 		}
 		if (_colorTransform == null) {
 			_colorTransform = new ColorTransform(1, 1, 1, 0, 0, 0, 0, 0x20);
