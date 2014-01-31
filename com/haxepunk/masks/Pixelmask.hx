@@ -5,6 +5,7 @@ import com.haxepunk.utils.BitmapDataPool;
 import flash.display.BitmapData;
 import flash.display.Graphics;
 import flash.geom.ColorTransform;
+import flash.geom.Matrix;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import com.haxepunk.HXP;
@@ -40,6 +41,7 @@ class Pixelmask extends Hitbox
 
 		threshold = 1;
 
+		_matrix = HXP.matrix;
 		_rect = HXP.rect;
 		_point = HXP.point;
 		_point2 = HXP.point2;
@@ -118,22 +120,23 @@ class Pixelmask extends Hitbox
 
 	override public function debugDraw(graphics:Graphics, scaleX:Float, scaleY:Float):Void
 	{
+		_rect.x = 0;
+		_rect.y = 0;
+		_rect.width = _data.width;
+		_rect.height = _data.height;
+		
 		if (_debug == null || _debug.width < _data.width || _debug.height < _data.height) {
-			_debug = new BitmapData(data.width, data.height, true, 0);
+			if (_debug != null) BitmapDataPool.recycle(_debug);
+			_debug = BitmapDataPool.create(data.width, data.height, true, 0);
+		} else {
+			_debug.fillRect(_rect, 0x0);
 		}
 		if (_colorTransform == null) {
 			_colorTransform = new ColorTransform(1, 1, 1, 0, 0, 0, 0, 0x20);
 		}
 		
-		HXP.rect.x = 0;
-		HXP.rect.y = 0;
-		HXP.rect.width = _data.width;
-		HXP.rect.height = _data.height;
-		
-		_debug.fillRect(HXP.rect, 0x0);
-		
 	#if flash
-		_debug.threshold(_data, HXP.rect, HXP.zero, ">=", threshold << 24, 0x400000FF, 0xFF000000);
+		_debug.threshold(_data, _rect, HXP.zero, ">=", threshold << 24, 0x400000FF, 0xFF000000);
 	#else
 		/* don't apply alpha threshold in the debug view on non-Flash 'cause it's slow (just show the bitmapdata)*/
 		_debug.draw(_data, null, _colorTransform);
@@ -142,15 +145,15 @@ class Pixelmask extends Hitbox
 		var sx:Float = scaleX;
 		var sy:Float = scaleY;
 		
-		HXP.matrix.a = sx;
-		HXP.matrix.d = sy;
-		HXP.matrix.b = HXP.matrix.c = 0;
-		HXP.matrix.tx = (parent.x - parent.originX - HXP.camera.x) * sx;
-		HXP.matrix.ty = (parent.y - parent.originY - HXP.camera.y) * sy;
+		_matrix.a = sx;
+		_matrix.d = sy;
+		_matrix.b = _matrix.c = 0;
+		_matrix.tx = (parent.x - parent.originX - HXP.camera.x) * sx;
+		_matrix.ty = (parent.y - parent.originY - HXP.camera.y) * sy;
 		
 		graphics.lineStyle();
-		graphics.beginBitmapFill(_debug, HXP.matrix);
-		graphics.drawRect(HXP.matrix.tx, HXP.matrix.ty, _data.width * sx, _data.height * sy);
+		graphics.beginBitmapFill(_debug, _matrix);
+		graphics.drawRect(_matrix.tx, _matrix.ty, _data.width * sx, _data.height * sy);
 		graphics.endFill();
 	}
 	
@@ -161,6 +164,7 @@ class Pixelmask extends Hitbox
 	private var _debug:BitmapData;
 	
 	// Global objects.
+	private var _matrix:Matrix;
 	private var _rect:Rectangle;
 	private var _point:Point;
 	private var _point2:Point;

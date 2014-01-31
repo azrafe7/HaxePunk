@@ -143,7 +143,8 @@ class Circle extends Hitbox
 		_width = _height = _radius * 2;
 		
 		if (data == null || (data.width < _width || data.height < _height)) {
-			data = new BitmapData(_width, _height, true, 0);
+			if (data != null) BitmapDataPool.recycle(data);
+			data = BitmapDataPool.create(_width, _height, true, 0);
 		} else {
 			data.fillRect(data.rect, 0);
 		}

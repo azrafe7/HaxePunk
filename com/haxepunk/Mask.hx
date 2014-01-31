@@ -155,7 +155,7 @@ class Mask
 			var p:Point = cast secondObject;
 			rectB = new Rectangle(p.x, p.y, 1, 1);
 			var pixel:Int = firstBMD.getPixel32(Std.int(p.x), Std.int(p.y));
-			return (pixel >> 24) >= firstAlphaThreshold;
+			return (pixel >>> 24) >= firstAlphaThreshold;
 		} else if (Std.is(secondObject, Rectangle)) {
 			rectB = (cast secondObject).clone();
 		} else if (Std.is(secondObject, BitmapData)) {
@@ -173,7 +173,7 @@ class Mask
 		}
 		
 		var intersectRect:Rectangle = rectA.intersection(rectB);
-		var boundsOverlap:Bool = (intersectRect.width > 0 && intersectRect.height > 0);
+		var boundsOverlap:Bool = (intersectRect.width >= 1 && intersectRect.height >= 1);
 		var hit:Bool = false;
 
 		if (boundsOverlap) {
@@ -204,20 +204,38 @@ class Mask
 			}
 			pixelsA.position = 0;
 			
+			// analyze overlapping area of BitmapDatas to check for a collision (alpha values >= alpha threshold)
 			var alphaA:Int = 0;
 			var alphaB:Int = 0;
-			var idx:Int = 0;
-			for (y in 0...h) {
-				for (x in 0...w) {
-					idx = (y * w + x) << 2;
-					alphaA = pixelsA[idx];
-					alphaB = secondBMD != null ? pixelsB[idx] : 255;
-					if (alphaA >= firstAlphaThreshold && alphaB >= secondAlphaThreshold) {
+			var overlapPixels:Int = w * h;
+			var alphaIdx:Int = 0;
+			
+			// check even pixels first
+			for (i in 0...Math.ceil(overlapPixels / 2)) 
+			{
+				alphaIdx = i << 3;
+				alphaA = pixelsA[alphaIdx];
+				alphaB = secondBMD != null ? pixelsB[alphaIdx] : 255;
+				if (alphaA >= firstAlphaThreshold && alphaB >= secondAlphaThreshold) 
+				{
+					hit = true;
+					break; 
+				}
+			}
+			
+			if (!hit) {
+				// check odd pixels
+				for (i in 0...overlapPixels >> 1) 
+				{
+					alphaIdx = (i << 3) + 4;
+					alphaA = pixelsA[alphaIdx];
+					alphaB = secondBMD != null ? pixelsB[alphaIdx] : 255;
+					if (alphaA >= firstAlphaThreshold && alphaB >= secondAlphaThreshold) 
+					{
 						hit = true;
 						break; 
 					}
 				}
-				if (hit) break;
 			}
 			
 			pixelsA = null;

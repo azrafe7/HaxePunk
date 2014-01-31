@@ -1,6 +1,5 @@
 package com.haxepunk.masks;
 
-import com.haxepunk.utils.BitmapDataPool;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.Graphics;
