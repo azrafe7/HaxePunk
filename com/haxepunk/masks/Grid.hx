@@ -63,6 +63,7 @@ class Grid extends Hitbox
 		_check.set(Type.getClassName(Mask), collideMask);
 		_check.set(Type.getClassName(Hitbox), collideHitbox);
 		_check.set(Type.getClassName(Pixelmask), collidePixelmask);
+		_check.set(Type.getClassName(Imagemask), collidePixelmask);
 		_check.set(Type.getClassName(Grid), collideGrid);
 	}
 

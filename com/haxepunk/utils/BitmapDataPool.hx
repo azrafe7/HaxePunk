@@ -23,7 +23,7 @@ class BitmapDataPool
 	private static var _rect:Rectangle = new Rectangle();
 	
 	private static var _length:Int = 0;
-	private static var _maxLength:Int = 8;
+	private static var _maxLength:Int = 16;
 	
 	/** Maximum number of BitmapData to hold in the pool. */
 	public static var maxLength(get, set):Int;

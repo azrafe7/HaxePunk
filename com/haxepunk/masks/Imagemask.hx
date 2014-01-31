@@ -1,7 +1,6 @@
 package com.haxepunk.masks;
 
 import com.haxepunk.Mask;
-import com.haxepunk.utils.BitmapDataPool;
 import flash.display.BitmapData;
 import flash.geom.Point;
 import flash.geom.Matrix;
@@ -43,8 +42,6 @@ class Imagemask extends Pixelmask
 
 		_bounds = new Rectangle();
 		this.source = source;
-		
-		_check.set(Type.getClassName(Imagemask), collidePixelmask);
 	}
 
 	/** The Image to use as source for the mask. */
@@ -65,7 +62,6 @@ class Imagemask extends Pixelmask
 	*/
 	override public function update()
 	{
-		//trace("upd");
 		getBounds();	// recalc bounds
 
 		_x = Math.floor(_bounds.x);
@@ -73,15 +69,10 @@ class Imagemask extends Pixelmask
 		_width = Math.ceil(_bounds.width);
 		_height = Math.ceil(_bounds.height);
 
-		if (_data == null || (_data.width < _width || _data.height < _height)) {
-			if (_data != null) BitmapDataPool.recycle(_data);
-			_data = BitmapDataPool.create(_width, _height, true, 0);
+		if (_data == null || (_data.width != _width || _data.height != _height)) {
+			_data = new BitmapData(_width, _height, true, 0);
 		} else {
-			_rect.x = 0;
-			_rect.y = 0;
-			_rect.width = _bounds.width;
-			_rect.height = _bounds.height;
-			_data.fillRect(_rect, 0);
+			data.fillRect(data.rect, 0);
 		}
 		
 		_point.x = -_x;

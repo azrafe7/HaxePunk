@@ -7,7 +7,6 @@ import com.haxepunk.masks.Grid;
 import com.haxepunk.masks.SlopedGrid;
 import com.haxepunk.math.Projection;
 import com.haxepunk.math.Vector;
-import com.haxepunk.utils.BitmapDataPool;
 import flash.display.BitmapData;
 import flash.display.Graphics;
 import flash.geom.Point;
@@ -36,6 +35,7 @@ class Circle extends Hitbox
 		_check.set(Type.getClassName(Hitbox), collideHitbox);
 		_check.set(Type.getClassName(Grid), collideGrid);
 		_check.set(Type.getClassName(Pixelmask), collidePixelmask);
+		_check.set(Type.getClassName(Imagemask), collidePixelmask);
 		_check.set(Type.getClassName(Circle), collideCircle);
 		_check.set(Type.getClassName(SlopedGrid), collideSlopedGrid);
 	}
@@ -142,9 +142,8 @@ class Circle extends Hitbox
 		
 		_width = _height = _radius * 2;
 		
-		if (data == null || (data.width < _width || data.height < _height)) {
-			if (data != null) BitmapDataPool.recycle(data);
-			data = BitmapDataPool.create(_width, _height, true, 0);
+		if (data == null || (data.width != _width || data.height != _height)) {
+			data = new BitmapData(_width, _height, true, 0);
 		} else {
 			data.fillRect(data.rect, 0);
 		}

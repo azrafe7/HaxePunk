@@ -8,7 +8,6 @@ import com.haxepunk.masks.Grid;
 import com.haxepunk.masks.Hitbox;
 import com.haxepunk.math.Projection;
 import com.haxepunk.math.Vector;
-import com.haxepunk.utils.BitmapDataPool;
 import flash.display.BitmapData;
 import flash.display.Graphics;
 import flash.geom.Point;
@@ -54,6 +53,7 @@ class Polygon extends Hitbox
 		_check.set(Type.getClassName(Hitbox), collideHitbox);
 		_check.set(Type.getClassName(Grid), collideGrid);
 		_check.set(Type.getClassName(Pixelmask), collidePixelmask);
+		_check.set(Type.getClassName(Imagemask), collidePixelmask);
 		_check.set(Type.getClassName(Circle), collideCircle);
 		_check.set(Type.getClassName(Polygon), collidePolygon);
 

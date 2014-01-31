@@ -1,7 +1,6 @@
 package com.haxepunk.masks;
 
 import com.haxepunk.Mask;
-import com.haxepunk.utils.BitmapDataPool;
 import flash.display.BitmapData;
 import flash.display.Graphics;
 import flash.geom.ColorTransform;
@@ -125,9 +124,8 @@ class Pixelmask extends Hitbox
 		_rect.width = _data.width;
 		_rect.height = _data.height;
 		
-		if (_debug == null || _debug.width < _data.width || _debug.height < _data.height) {
-			if (_debug != null) BitmapDataPool.recycle(_debug);
-			_debug = BitmapDataPool.create(data.width, data.height, true, 0);
+		if (_debug == null || (_debug.width != _data.width || _debug.height != _data.height)) {
+			_debug = new BitmapData(data.width, data.height, true, 0);
 		} else {
 			_debug.fillRect(_rect, 0x0);
 		}
