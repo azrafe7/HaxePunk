@@ -765,10 +765,13 @@ class Console
 				LAYER_LIST.push(e.layer);
 		}
 		// sort the layers
-		LAYER_LIST.sort(function (a:Int, b:Int):Int { return a - b; });
+		LAYER_LIST.sort(layerComparer);
 		_layerList.set(LAYER_LIST);
 	}
-
+	
+	/** Simple int comparer function for layers sorting. */
+	private inline function layerComparer(a:Int, b:Int):Int { return a - b; }
+	
 	/** @private Renders the Entities positions and hitboxes. */
 	private function renderEntities()
 	{

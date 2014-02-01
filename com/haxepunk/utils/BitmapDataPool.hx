@@ -15,8 +15,12 @@ import flash.geom.Rectangle;
 @:access(BitmapDataPoolNode)
 class BitmapDataPool
 {
-	public static var total:Int = 0;
-	public static var hits:Int = 0;
+	/** Total number of requests made to create(). */
+	public static var requests:Float = 0;
+	
+	/** Number of times a suitable BitmapData was found in the pool after a request to create(). */
+	public static var hits:Float = 0;
+	
 	private static var _head:BitmapDataPoolNode = null;
 	private static var _tail:BitmapDataPoolNode = null;
 	
@@ -91,8 +95,7 @@ class BitmapDataPool
 			node = node.next;
 		}
 		
-		trace("create");
-		total++;
+		requests++;
 		if (res != null) 	// suitable BitmapData found in the pool
 		{
 			hits++;
@@ -116,7 +119,6 @@ class BitmapDataPool
 	/** Adds (/recycles) bmd to the pool for future use. */
 	public static function recycle(bmd:BitmapData):Void 
 	{
-		trace("recycle" + bmd.width + "x" + bmd.height);
 		if (_length >= maxLength) 
 		{
 			var last = _tail;

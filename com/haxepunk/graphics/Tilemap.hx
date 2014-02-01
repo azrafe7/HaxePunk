@@ -10,15 +10,19 @@ import com.haxepunk.masks.Grid;
 
 
 typedef Array2D = Array<Array<Int>>
+
 /**
  * A canvas to which Tiles can be drawn for fast multiple tile rendering.
  */
 class Tilemap extends Canvas
 {
 	/**
-	 * If x/y positions should be used instead of columns/rows.
+	 * If x/y pixel coords should be used instead of columns/rows (the default). Columns/rows means 
+	 * tile coords ([0,0] => first tile, [0,1] second tile, etc.). Using pixel coords the target tile
+	 * will depend on tileWidth/tileHeight. So if you have a grid with tileWidth/tileHeight of 16x16, then 
+	 * [10,12] => first tile, [30, 12] => second tile, etc..
 	 */
-	public var usePositions:Bool;
+	public var usePixelCoords:Bool;
 
 	/**
 	 * Constructor.
@@ -120,7 +124,7 @@ class Tilemap extends Canvas
 	 */
 	public function setTile(column:Int, row:Int, index:Int = 0)
 	{
-		if (usePositions)
+		if (usePixelCoords)
 		{
 			column = Std.int(column / _tile.width);
 			row = Std.int(row / _tile.height);
@@ -144,7 +148,7 @@ class Tilemap extends Canvas
 	 */
 	public function clearTile(column:Int, row:Int)
 	{
-		if (usePositions)
+		if (usePixelCoords)
 		{
 			column = Std.int(column / _tile.width);
 			row = Std.int(row / _tile.height);
@@ -168,7 +172,7 @@ class Tilemap extends Canvas
 	 */
 	public function getTile(column:Int, row:Int):Int
 	{
-		if (usePositions)
+		if (usePixelCoords)
 		{
 			column = Std.int(column / _tile.width);
 			row = Std.int(row / _tile.height);
@@ -186,7 +190,7 @@ class Tilemap extends Canvas
 	 */
 	public function setRect(column:Int, row:Int, width:Int = 1, height:Int = 1, index:Int = 0)
 	{
-		if (usePositions)
+		if (usePixelCoords)
 		{
 			column = Std.int(column / _tile.width);
 			row = Std.int(row / _tile.height);
@@ -198,8 +202,8 @@ class Tilemap extends Canvas
 		var c:Int = column,
 			r:Int = column + width,
 			b:Int = row + height,
-			u:Bool = usePositions;
-		usePositions = false;
+			u:Bool = usePixelCoords;
+		usePixelCoords = false;
 		while (row < b)
 		{
 			while (column < r)
@@ -210,7 +214,7 @@ class Tilemap extends Canvas
 			column = c;
 			row ++;
 		}
-		usePositions = u;
+		usePixelCoords = u;
 	}
 
 	/**
@@ -222,7 +226,7 @@ class Tilemap extends Canvas
 	 */
 	public function clearRect(column:Int, row:Int, width:Int = 1, height:Int = 1)
 	{
-		if (usePositions)
+		if (usePixelCoords)
 		{
 			column = Std.int(column / _tile.width);
 			row = Std.int(row / _tile.height);
@@ -234,8 +238,8 @@ class Tilemap extends Canvas
 		var c:Int = column,
 			r:Int = column + width,
 			b:Int = row + height,
-			u:Bool = usePositions;
-		usePositions = false;
+			u:Bool = usePixelCoords;
+		usePixelCoords = false;
 		while (row < b)
 		{
 			while (column < r)
@@ -246,7 +250,7 @@ class Tilemap extends Canvas
 			column = c;
 			row ++;
 		}
-		usePositions = u;
+		usePixelCoords = u;
 	}
 
 	/**
@@ -340,7 +344,7 @@ class Tilemap extends Canvas
 	 */
 	public function shiftTiles(columns:Int, rows:Int, wrap:Bool = false)
 	{
-		if (usePositions)
+		if (usePixelCoords)
 		{
 			columns = Std.int(columns / _tile.width);
 			rows = Std.int(rows / _tile.height);
@@ -418,8 +422,8 @@ class Tilemap extends Canvas
 			y:Int = Std.int(rect.y),
 			w:Int = Std.int(x + rect.width),
 			h:Int = Std.int(y + rect.height),
-			u:Bool = usePositions;
-		usePositions = false;
+			u:Bool = usePixelCoords;
+		usePixelCoords = false;
 		if (clear)
 		{
 			while (y < h)
@@ -438,7 +442,7 @@ class Tilemap extends Canvas
 				y ++;
 			}
 		}
-		usePositions = u;
+		usePixelCoords = u;
 	}
 
 	public override function render(target:BitmapData, point:Point, camera:Point)

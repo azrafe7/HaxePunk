@@ -15,11 +15,12 @@ import com.haxepunk.Mask;
 class Grid extends Hitbox
 {
 	/**
-	 * If x/y positions should be used instead of columns/rows (the default). Columns/rows means 
-	 * screen coordinates relative to the width/height specified in the constructor. X/y means 
-	 * grid coordinates, relative to the grid size.
+	 * If x/y pixel coords should be used instead of columns/rows (the default). Columns/rows means 
+	 * tile coords ([0,0] => first tile, [0,1] second tile, etc.). Using pixel coords the target tile
+	 * will depend on tileWidth/tileHeight. So if you have a grid with tileWidth/tileHeight of 16x16, then 
+	 * [10,12] => first tile, [30, 12] => second tile, etc..
 	 */
-	public var usePositions:Bool;
+	public var usePixelCoords:Bool;
 
 
 	/**
@@ -57,7 +58,7 @@ class Grid extends Hitbox
 		_y = y;
 		_width = width;
 		_height = height;
-		usePositions = false;
+		usePixelCoords = false;
 
 		// set callback functions
 		_check.set(Type.getClassName(Mask), collideMask);
@@ -75,7 +76,7 @@ class Grid extends Hitbox
 	 */
 	public function setTile(column:Int = 0, row:Int = 0, solid:Bool = true)
 	{
-		if (usePositions)
+		if (usePixelCoords)
 		{
 			column = Std.int(column / _tile.width);
 			row = Std.int(row / _tile.height);
@@ -101,7 +102,7 @@ class Grid extends Hitbox
 	 */
 	public function getTile(column:Int = 0, row:Int = 0):Bool
 	{
-		if (usePositions)
+		if (usePixelCoords)
 		{
 			column = Std.int(column / _tile.width);
 			row = Std.int(row / _tile.height);
@@ -119,7 +120,7 @@ class Grid extends Hitbox
 	 */
 	public function setRect(column:Int = 0, row:Int = 0, width:Int = 1, height:Int = 1, solid:Bool = true)
 	{
-		if (usePositions)
+		if (usePixelCoords)
 		{
 			column = Std.int(column / _tile.width);
 			row    = Std.int(row / _tile.height);
